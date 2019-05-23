@@ -8,7 +8,7 @@ const db = require("./db")
 const collection = "todo"
 
 app.get('/', (req, res) => {
-    res,sendFile(path.join(__dirname, 'index.html'))
+    res.sendFile(path.join(__dirname, 'index.html'))
 })
 
 app.get('/getTodos', (req, res) => {
@@ -45,7 +45,7 @@ app.post('/', (req, res) => {
 })
 
 app.delete('/:id', (req, res) => {
-    const todoID =req.params.id
+    const todoID = req.params.id
 
     db.getDB().collection(collection).findOneAndDelete({_id : db.getPrimaryKey(todoID)}, (err, result) => {
             if (err)

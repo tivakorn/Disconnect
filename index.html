@@ -20,8 +20,9 @@
             <div class="col-lg-8">
                 <form id="form">
                     <div class="form-group">
-                        <label for="formGroupExampleInput">Todo</label>
-                        <input type="text" class="form-control" id="todoUserInput" placeholder="todo">
+
+                        <label for="todo">Todo </label>
+                        <input type="text" class="form-control" id="todoUserInput" placeholder="Todo">
                         <button type="submit" class="btn btn-primary">Create</button>
                     </div>
                 </form>
@@ -31,9 +32,17 @@
         <div class="row">
             <div class="col-lg-2"></div>
             <div class="col-lg-8">
-                <ul class="list-    group" id="display">
+                <ul class="list-group" id="display">
 
                 </ul>
+            </div>
+            <div class="col-lg-2"></div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8">
+                <div class="alert" role="alert" id="message"></div>
             </div>
             <div class="col-lg-2"></div>
         </div>
@@ -52,12 +61,75 @@
         crossorigin="anonymous"></script>
     <script>
         $(document).ready(() => {
-            const display = $("#display");
-            const form = $("#form");
-            const todoUserInput = $("#todoUserInput");
+            const display = $("#display")
+            const form = $("#form")
+            const todoUserInput = $("#todoUserInput")
+            const message = $("#message")
+            message.hide()
+
+            const displayMessage = (flag, msg) => {
+                if (flag) {
+                    message.removeClass('alert-danger')
+                    message.addClass('alert-success')
+                    message.html(msg)
+                    message.show()
+                } else {
+                    message.removeClass('alert-success')
+                    message.addClass('alert-danger')
+                    message.html(msg)
+                    message.show()
+                }
+            }
+
+            const getTodos = () => {
+                fetch('/getTodos', { method: "get" }).then((response) => {
+                    return response.json();
+                }).then((data) => {
+                    console.log(data)
+                    displayTodos(data)
+                })
+            }
+
+            getTodos()
 
             const resetTodosInput = () => {
-                todo.todoUserInput.val('');
+                todoUserInput.val('')
+            }
+
+            const editTodo = (todo, todoID, editID) => {
+                let editBtn = $(`#${editID}`)
+                editBtn.click(() => {
+                    fetch(`/${todo._id}`, {
+                        method: "put",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8"
+                        },
+                        body: JSON.stringify({ todo: todoUserInput.val() })
+                    }).then((response) => {
+                        return response.json()
+                    }).then((data) => {
+                        if (data.ok == 1) {
+                            let todoIndex = $(`#${todoID}`)
+                            todoIndex.html(data.value.todo)
+                            resetTodosInput()
+                        }
+                    })
+                })
+            }
+
+            const deleteTodo = (todo, listItemID, deleteID) => {
+                let deleteBtn = $(`#${deleteID}`)
+                deleteBtn.click(() => {
+                    fetch(`/${todo._id}`, {
+                        method: "delete"
+                    }).then((response) => {
+                        return response.json()
+                    }).then((data) => {
+                        if (data.ok == 1) {
+                            $(`#${listItemID}`).remove()
+                        }
+                    })
+                })
             }
 
             const buildIDS = (todo) => {
@@ -76,31 +148,20 @@
                                 <div class="col-md-4"></div>
                                 <div class="col-md-4 text-right">
                                     <button type="button" class="btn btn-secondary" id="${ids.editID}">Edit</button>
-                                    <button type="button" class="btn btn-danger" id="${ids.deleteID}">Delete</button>    
-                                </div>    
+                                    <button type="button" class="btn btn-danger" id="${ids.deleteID}">Delete</button>
+                                </div>
                             </div>
-                        </li>`;
-            }
-
-            const getTodos = () => {
-                fetch('/getTodos', { method: "get" }).then((response) => {
-                    return response.json();
-                }).then((data) => {
-                    console.log(data);
-                    displayTodos(data);
-                });
+                       </li>`
             }
 
             const displayTodos = (data) => {
                 data.forEach((todo) => {
-                    let ids = buildIDS(todo);
-                    display.append(buildTemplate(todo, ids));
-                    //editTodo(todo, ids.todoID, ids.editID);
-                    //deleteTodo(todo, ids.listItemID, ids.deleteID);
-                });
+                    let ids = buildIDS(todo)
+                    display.append(buildTemplate(todo, ids))
+                    editTodo(todo, ids.todoID, ids.editID)
+                    deleteTodo(todo, ids.listItemID, ids.deleteID)
+                })
             }
-
-            getTodos();
 
             form.submit((e) => {
                 e.preventDefault();
@@ -111,18 +172,23 @@
                         "Content-Type": "application/json; charset=utf-8"
                     }
                 }).then((response) => {
-                    return response.json();
+                    return response.json()
                 }).then((data) => {
-                    if (data.result.ok == 1 && data.result.n == 1) {
-                        let ids = buildIDS(data.document);
-                        display.append(buildTemplate(data.document, ids));
-                        // editTodo(data.document,ids.todoID,ids.editID);
-                        // deleteTodo(data.document,ids.listItemID,ids.deleteID);
+                    if (!data.error) {
+                        if (data.result.ok == 1 && data.result.n == 1) {
+                            let ids = buildIDS(data.document)
+                            display.append(buildTemplate(data.document, ids))
+                            editTodo(data.document, ids.todoID, ids.editID)
+                            deleteTodo(data.document, ids.listItemID, ids.deleteID)
+                            displayMessage(true, data.msg)
+                        }
                     }
-                    resetTodosInput();
-                });
-            });
-        });
+                    else
+                        displayMessage(false, data.error.message)
+                    resetTodosInput()
+                })
+            })
+        })
     </script>
 </body>
 

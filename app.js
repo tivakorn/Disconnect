@@ -1,9 +1,11 @@
 const express = require('express')
-const bodyPaser = require("body-parser")
+const bodyParser = require("body-parser")
 const app = express()
-app.use(bodyPaser.json())
+app.use(bodyParser.json())
 const path = require('path')
-const port = 3333
+
+const port = 2222
+
 const db = require("./db")
 const collection = "todo"
 

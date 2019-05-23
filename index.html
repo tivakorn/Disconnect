@@ -71,6 +71,27 @@
                 todoUserInput.val('')
             }
 
+            const editTodo = (todo,todoID,editID)=>{
+                let editBtn = $(`#${editID}`)
+                editBtn.click(()=>{
+                    fetch(`/${todo._id}`,{
+                        method : "put",
+                        headers : {
+                            "Content-Type" : "application/json; charset=utf-8" 
+                        },
+                        body : JSON.stringify({todo : todoUserInput.val()})
+                    }).then((response)=>{
+                        return response.json()
+                    }).then((data)=>{
+                        if(data.ok == 1){
+                            let todoIndex = $(`#${todoID}`)
+                            todoIndex.html(data.value.todo)
+                            resetTodosInput()
+                        }
+                    })
+                })
+            }
+
             const deleteTodo = (todo, listItemID, deleteID) => {
                 let deleteBtn = $(`#${deleteID}`)
                 deleteBtn.click(() => {
@@ -96,29 +117,29 @@
             }
 
             const buildTemplate = (todo, ids) => {
-                return `<li class="list-group-item" id"${ids.listItemID}">
-                                <div class="row">
-                                    <div class="col-md-4" id="${ids.todoID}">${todo.todo}</div>
-                                    <div class="col-md-4"></div>
-                                    <div class="col-md-4 text-right">
-                                        <button type="button" class="btn btn-secondary" id="${ids.editID}">Edit</button>
-                                        <button type="button" class="btn btn-danger" id="${ids.deleteID}">Delete</button>
-                                    </div>
+                return `<li class="list-group-item" id="${ids.listItemID}">
+                            <div class="row">
+                                <div class="col-md-4" id="${ids.todoID}">${todo.todo}</div>
+                                <div class="col-md-4"></div>
+                                <div class="col-md-4 text-right">
+                                    <button type="button" class="btn btn-secondary" id="${ids.editID}">Edit</button>
+                                    <button type="button" class="btn btn-danger" id="${ids.deleteID}">Delete</button>
                                 </div>
-                            </li>`
+                            </div>
+                       </li>`
             }
 
             const displayTodos = (data) => {
                 data.forEach((todo) => {
                     let ids = buildIDS(todo)
                     display.append(buildTemplate(todo, ids))
-                    // editTodo(todo, ids.todoID, ids.editID)
+                    editTodo(todo, ids.todoID, ids.editID)
                     deleteTodo(todo, ids.listItemID, ids.deleteID)
                 })
             }
 
             form.submit((e) => {
-                e.preventDefault()
+                e.preventDefault();
                 fetch('/', {
                     method: 'post',
                     body: JSON.stringify({ todo: todoUserInput.val() }),
@@ -126,13 +147,14 @@
                         "Content-Type": "application/json; charset=utf-8"
                     }
                 }).then((response) => {
-                    return response.json()
+                    return response.json();
                 }).then((data) => {
                     if (data.result.ok == 1 && data.result.n == 1) {
-                        let ids = buildIDS(data.document)
-                        display.append(buildTemplate(data.document, ids))
-                        // editTodo(data.document, ids.todoID, ids.editID)
-                        deleteTodo(data.document, ids.listItemID, ids.deleteID)
+                        let ids = buildIDS(data.document);
+                        display.append(buildTemplate(data.document, ids));
+                        editTodo(data.document, ids.todoID, ids.editID);
+                        deleteTodo(data.document, ids.listItemID, ids.deleteID);
+                        displayMessage(true, data.msg);
                     }
                     resetTodosInput()
                 })
